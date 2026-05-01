@@ -1,23 +1,30 @@
 export default async function handler(req, res) {
-  if (req.method !== 'POST')
-    return res.status(405).json({ error: 'Method Not Allowed' });
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   const { prompt, isJson } = req.body;
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${process.env.GEMINI_API_KEY}`;
+  const url = "[https://openrouter.ai/api/v1/chat/completions](https://openrouter.ai/api/v1/chat/completions)";
 
   try {
     const response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': '[https://playimdb.vercel.app](https://playimdb.vercel.app)',
+        'X-Title': 'PlayIMDB'
+      },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        ...(isJson && {
-          generationConfig: { responseMimeType: 'application/json' },
-        }),
-      }),
+        model: "google/gemini-1.5-flash:free", // Explicitly using the free-tier model
+        messages: [{ role: "user", content: prompt }],
+        ...(isJson && { response_format: { type: "json_object" } })
+      })
     });
 
-    if (!response.ok) throw new Error('Gemini API Error');
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`OpenRouter API Error: ${response.status} ${errText}`);
+    }
+
     const data = await response.json();
     res.status(200).json(data);
   } catch (error) {

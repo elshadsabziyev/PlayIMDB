@@ -250,28 +250,32 @@ export default function App() {
   }, [chatMessages, isChatLoading]);
 
   const callGemini = async (prompt, isJson = false) => {
-    let retries = 5,
-      delay = 1000;
+    let retries = 5, delay = 1000;
     while (retries > 0) {
       try {
         const response = await fetch('/api/gemini', {
-          method: 'POST',
+          method: 'POST', 
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt, isJson }),
+          body: JSON.stringify({ prompt, isJson })
         });
-        if (!response.ok) throw new Error();
+  
+        if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!text) throw new Error();
+  
+        // Extract content from OpenAI-compatible schema returned by OpenRouter
+        const text = data.choices?.[0]?.message?.content;
+        if (!text) throw new Error('Invalid response structure');
+  
         return isJson ? JSON.parse(text) : text;
-      } catch (err) {
-        retries--;
-        await new Promise((r) => setTimeout(r, delay));
-        delay *= 2;
+      } catch (err) { 
+        retries--; 
+        if (retries === 0) throw new Error("API Limit or Network Error");
+        await new Promise(r => setTimeout(r, delay)); 
+        delay *= 2; 
       }
     }
-    throw new Error('API Limit');
   };
+  
 
   const safeRender = (val) => {
     if (val === undefined || val === null) return '';

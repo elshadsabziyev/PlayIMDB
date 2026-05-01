@@ -2,18 +2,18 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   const { prompt } = req.body;
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${process.env.GEMINI_API_KEY}`;
+  const encodedPrompt = encodeURIComponent(prompt);
+  const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&nologo=true`;
 
   try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ instances: { prompt }, parameters: { sampleCount: 1 } })
-    });
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Image Generation Error');
 
-    if (!response.ok) throw new Error('Imagen API Error');
-    const data = await response.json();
-    res.status(200).json(data);
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const base64 = buffer.toString('base64');
+
+    res.status(200).json({ predictions: [{ bytesBase64Encoded: base64 }] });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
