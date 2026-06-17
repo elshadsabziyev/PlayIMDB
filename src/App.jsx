@@ -446,17 +446,11 @@ export default function App() {
           imgSuccess = false;
         while (retries > 0 && !imgSuccess) {
           try {
-            const res = await fetch(
-              `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`,
-              {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  instances: { prompt: imgP },
-                  parameters: { sampleCount: 1 },
-                }),
-              }
-            );
+            const res = await fetch('/api/imagen', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ prompt: imgP }),
+            });
             if (!res.ok) throw new Error();
             const d = await res.json();
             if (d.predictions?.[0]) {
